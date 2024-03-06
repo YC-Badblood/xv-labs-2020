@@ -5,8 +5,10 @@ struct rtcdate;
 int fork(void);
 int exit(int) __attribute__((noreturn));
 int wait(int*);
+
 int pipe(int*);
 int write(int, const void*, int);
+// read(fd，buf，n)从文件描述符fd读取最多n字节，将它们复制到buf，并返回读取的字节数
 int read(int, void*, int);
 int close(int);
 int kill(int);
