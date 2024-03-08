@@ -30,6 +30,7 @@ ls(char *path)
   struct dirent de;
   struct stat st;
 
+  //The 0 value in this case corresponds to the O_RDONLY flag, which stands for "read-only mode".
   if((fd = open(path, 0)) < 0){
     fprintf(2, "ls: cannot open %s\n", path);
     return;
