@@ -2,7 +2,7 @@
 
 // qemu -machine virt is set up like this,
 // based on qemu's hw/riscv/virt.c:
-//
+// 
 // 00001000 -- boot ROM, provided by qemu
 // 02000000 -- CLINT
 // 0C000000 -- PLIC
@@ -22,7 +22,7 @@
 #define UART0_IRQ 10
 
 // virtio mmio interface
-#define VIRTIO0 0x10001000
+#define VIRTIO0 0x10001000 
 #define VIRTIO0_IRQ 1
 
 // local interrupt controller, which contains the timer.
@@ -31,7 +31,7 @@
 #define CLINT_MTIME (CLINT + 0xBFF8) // cycles since boot.
 
 // qemu puts programmable interrupt controller here.
-#define PLIC 0x0c000000L
+#define PLIC 0x0c000000L    // Programmable Interrupt Controller
 #define PLIC_PRIORITY (PLIC + 0x0)
 #define PLIC_PENDING (PLIC + 0x1000)
 #define PLIC_MENABLE(hart) (PLIC + 0x2000 + (hart)*0x100)
@@ -49,7 +49,7 @@
 
 // map the trampoline page to the highest address,
 // in both user and kernel space.
-#define TRAMPOLINE (MAXVA - PGSIZE)
+#define TRAMPOLINE (MAXVA - PGSIZE) // 0xFFFFFFC000000000，只有一个页的大小
 
 // map kernel stacks beneath the trampoline,
 // each surrounded by invalid guard pages.

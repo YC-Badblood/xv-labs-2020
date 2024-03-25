@@ -320,11 +320,12 @@ sfence_vma()
 }
 
 
-#define PGSIZE 4096 // bytes per page
+#define PGSIZE 4096 // bytes per page = 0x1000
 #define PGSHIFT 12  // bits of offset within a page
 
+// PGSIZE - 1 = 0xFFF
 #define PGROUNDUP(sz)  (((sz)+PGSIZE-1) & ~(PGSIZE-1))
-#define PGROUNDDOWN(a) (((a)) & ~(PGSIZE-1))
+#define PGROUNDDOWN(a) (((a)) & ~(PGSIZE-1)) // 0x1000 -> 0x0，PGROUNDDOWN 可能用于计算包含给定地址的页的起始地址。**用于地址对齐**
 
 #define PTE_V (1L << 0) // valid
 #define PTE_R (1L << 1)
@@ -335,7 +336,7 @@ sfence_vma()
 // shift a physical address to the right place for a PTE.
 #define PA2PTE(pa) ((((uint64)pa) >> 12) << 10)
 
-#define PTE2PA(pte) (((pte) >> 10) << 12)
+#define PTE2PA(pte) (((pte) >> 10) << 12) // 从页表项中提取物理地址
 
 #define PTE_FLAGS(pte) ((pte) & 0x3FF)
 
@@ -351,4 +352,4 @@ sfence_vma()
 #define MAXVA (1L << (9 + 9 + 9 + 12 - 1))
 
 typedef uint64 pte_t;
-typedef uint64 *pagetable_t; // 512 PTEs
+typedef uint64 *pagetable_t; // 512 PTEs，（2^12B），一个页表占4KB

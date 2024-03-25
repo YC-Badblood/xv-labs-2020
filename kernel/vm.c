@@ -9,7 +9,7 @@
 /*
  * the kernel's page table.
  */
-pagetable_t kernel_pagetable;
+pagetable_t kernel_pagetable; // 内核页表的头指针
 
 extern char etext[];  // kernel.ld sets this to end of kernel code.
 
@@ -68,24 +68,26 @@ kvminithart()
 //   21..29 -- 9 bits of level-1 index.
 //   12..20 -- 9 bits of level-0 index.
 //    0..11 -- 12 bits of byte offset within the page.
+// 注意其具有分配页表的功能
 pte_t *
 walk(pagetable_t pagetable, uint64 va, int alloc)
 {
   if(va >= MAXVA)
-    panic("walk");
+    panic("walk");  // 虚拟地址超出范围
 
-  for(int level = 2; level > 0; level--) {
-    pte_t *pte = &pagetable[PX(level, va)];
-    if(*pte & PTE_V) {
-      pagetable = (pagetable_t)PTE2PA(*pte);
-    } else {
-      if(!alloc || (pagetable = (pde_t*)kalloc()) == 0)
+  for(int level = 2; level > 0; level--) {  // 从最高级页表开始遍历，遍历2次
+    // 取出当前级别的页表
+    pte_t *pte = &pagetable[PX(level, va)]; // ((((uint64) (va)) >> (12+(9*(level)))) & 0x1FF)
+    if(*pte & PTE_V) {  // 页表项有效，PTE本身为一个物理地址，指向下一级页表
+      pagetable = (pagetable_t)PTE2PA(*pte);  // 取出下级页表的物理地址，是下一级页表的那张开头的页表101 -> 111 -> 115
+    } else {  // 页表项无效
+      if(!alloc || (pagetable = (pde_t*)kalloc()) == 0) // 页表项无效，且不需要分配页表，或者分配失败
         return 0;
-      memset(pagetable, 0, PGSIZE);
-      *pte = PA2PTE(pagetable) | PTE_V;
+      memset(pagetable, 0, PGSIZE); // 清空新分配的页表，初始化为0，清空垃圾数据
+      *pte = PA2PTE(pagetable) | PTE_V; // 将页表的物理地址写入页表项， 并使用PTE_V标记为有效
     }
   }
-  return &pagetable[PX(0, va)];
+  return &pagetable[PX(0, va)]; // 返回最低级页表项，即找到的页表的入口
 }
 
 // Look up a virtual address, return the physical address,
@@ -115,7 +117,7 @@ walkaddr(pagetable_t pagetable, uint64 va)
 // only used when booting.
 // does not flush TLB or enable paging.
 void
-kvmmap(uint64 va, uint64 pa, uint64 sz, int perm)
+kvmmap(uint64 va, uint64 pa, uint64 sz, int perm) // 将物理地址pa映射到虚拟地址va
 {
   if(mappages(kernel_pagetable, va, sz, pa, perm) != 0)
     panic("kvmmap");
@@ -150,18 +152,18 @@ mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
 {
   uint64 a, last;
   pte_t *pte;
-
-  a = PGROUNDDOWN(va);
+  // 用于对齐
+  a = PGROUNDDOWN(va);  // 将给定的地址 va 向下舍入到页大小的最接近的较小倍数。这通常用于虚拟内存系统的上下文中，其中内存被划分为固定大小的页
   last = PGROUNDDOWN(va + size - 1);
   for(;;){
-    if((pte = walk(pagetable, a, 1)) == 0)
+    if((pte = walk(pagetable, a, 1)) == 0)  // walk返回0，说明分配页表失败
       return -1;
-    if(*pte & PTE_V)
-      panic("remap");
+    if(*pte & PTE_V)  // 页表项有效，说明已经映射过了
+      panic("remap"); // 报错：重映射
     *pte = PA2PTE(pa) | perm | PTE_V;
     if(a == last)
       break;
-    a += PGSIZE;
+    a += PGSIZE;  // 映射下一页，因为是对地址的操作，所以不是++，二十加实际页的大小
     pa += PGSIZE;
   }
   return 0;
