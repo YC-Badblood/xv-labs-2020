@@ -50,6 +50,7 @@ usertrap(void)
   // save user program counter.
   p->trapframe->epc = r_sepc();
   
+  // 陷入异常的原因
   if(r_scause() == 8){
     // system call
 
@@ -58,6 +59,7 @@ usertrap(void)
 
     // sepc points to the ecall instruction,
     // but we want to return to the next instruction.
+    // 跳过ecall指令，继续执行
     p->trapframe->epc += 4;
 
     // an interrupt will change sstatus &c registers,
@@ -80,7 +82,7 @@ usertrap(void)
   if(which_dev == 2)
     yield();
 
-  usertrapret();
+  usertrapret();  // 返回用户态需要的一些准备操作
 }
 
 //
@@ -111,6 +113,7 @@ usertrapret(void)
   
   // set S Previous Privilege mode to User.
   unsigned long x = r_sstatus();
+  // 控制sret的返回模式
   x &= ~SSTATUS_SPP; // clear SPP to 0 for user mode
   x |= SSTATUS_SPIE; // enable interrupts in user mode
   w_sstatus(x);

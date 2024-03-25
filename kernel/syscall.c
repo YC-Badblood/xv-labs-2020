@@ -135,9 +135,10 @@ syscall(void)
   int num;
   struct proc *p = myproc();
 
+  // 获取保存的a7中的系统调用编号（write是16，for example），被trapoline.S保存在trapframe中，并使用其索引指向函数的指针表
   num = p->trapframe->a7;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
-    p->trapframe->a0 = syscalls[num]();
+    p->trapframe->a0 = syscalls[num](); // a0保存return value
   } else {
     printf("%d %s: unknown sys call %d\n",
             p->pid, p->name, num);
