@@ -316,6 +316,9 @@ static inline void
 sfence_vma()
 {
   // the zero, zero means flush all TLB entries.
+  // 后备缓冲，一种硬件缓存，用于改善虚拟内存到物理内存的地址转换速度。
+  // 将最近使用的页表项缓存到TLB中，以便在下次访问相同的虚拟地址时，可以更快地找到对应的物理地址。
+  // 当需要转换时，先查找TLB，若找到则称为TLB命中，否则称为TLB未命中。这比在页表中查找要快得多。
   asm volatile("sfence.vma zero, zero");
 }
 
